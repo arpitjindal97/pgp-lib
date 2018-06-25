@@ -1,0 +1,96 @@
+Functions to make
+
+AddPrivateKey(path string,passphrase string) {
+
+    remove any existing public key with same fingerprint
+
+    if private key already exists {
+        return "Already Exists"
+    } else {
+        add this private key
+        return "Done"
+    }
+
+}
+
+AddPublicKey(path string){
+    if publickkey already exists {
+        return "Already Exists"
+    } else {
+        add this public key
+        return "Done"
+    }
+}
+
+type Entity struct {
+    Identities  []Identity
+    Fingerprint string
+    Algorithm   string
+}
+
+type Identity struct {
+    Name    string
+    Comment string
+    Email   string
+}
+
+GetPrivateKeyList() {
+    fetch all private keys
+    store them in []Entity
+    return it
+}
+
+GetPublicKeyList() {
+    fetch all public keys
+    make []Entity
+    return it
+}
+
+GetPrivateKeyList(email string){
+    fetch all private keys which contains email
+    return them in []Entity
+}
+
+SetPrivateKey(email string, fingerprint string) {
+    set this fingerprint in email account
+    return "Done"
+}
+
+DeletePrivateKey(fingerprint string) {
+    used := check if this key is used in any email account
+    if used {
+        email := fetch first account using this fingerprint
+        return "this key is being used by "+ email
+    } else {
+        delete this private key
+        return "Done"
+    }
+}
+
+DeletePublicKey(fingerprint string) {
+    delete this public key
+    return "Done"
+}
+
+DecryptText(email string, text string) {
+    fetch the private key used by this account
+    decrypt text
+    return it
+}
+
+EncryptText(sender string, reciever []string, text string) {
+
+    recieverEntity[] (official)
+
+    for r := range reciever {
+        fetch first public key containing this r (email id)
+        fill entity array
+    }
+
+    fetch fingerprint used by sender email
+    prepare senderEntity (official)
+
+    encrypt the text
+
+    return the text
+}
