@@ -2,24 +2,21 @@ Functions to make
 
 AddPrivateKey(path string,passphrase string) {
 
-    remove any existing public key with same fingerprint
-
-    if private key already exists {
+    if any key exists with same fingerprint
         return "Already Exists"
-    } else {
-        add this private key
-        return "Done"
-    }
+
+    add this private key
+    return "Done"
 
 }
 
 AddPublicKey(path string){
-    if publickkey already exists {
+
+    if any key exists with same fingerprint
         return "Already Exists"
-    } else {
-        add this public key
-        return "Done"
-    }
+
+    add this public key
+    return "Done"
 }
 
 type Entity struct {
@@ -34,30 +31,47 @@ type Identity struct {
     Email   string
 }
 
-GetPrivateKeyList() {
-    fetch all private keys
+GetKeyList(keytype string) {
+
+    keytype: private
+        fetch all private keys
+    keytype: public
+        fetch all public keys
+
     store them in []Entity
     return it
 }
 
-GetPublicKeyList() {
-    fetch all public keys
-    make []Entity
-    return it
-}
 
-GetPrivateKeyList(email string){
-    fetch all private keys which contains email
+GetKeyListEmail(email, keytype string){
+    GetKeyList(keytype)
+    filter them for email
     return them in []Entity
 }
 
-SetPrivateKey(email string, fingerprint string) {
+AddAccount(email string, fingerprint string){
+
+    if email already exists
+        return "Already Exists"
+
+    add to accounts table
+}
+
+EditAccount(email string, fingerprint string) {
     set this fingerprint in email account
+    // fingerprint can be "" (none selected)
     return "Done"
 }
 
-DeletePrivateKey(fingerprint string) {
+DeleteKey(fingerprint string, keytype string) {
+
+    if keytype == public
+        delete it from key table
+        return "Done"
+
+    // key is of private type
     used := check if this key is used in any email account
+
     if used {
         email := fetch first account using this fingerprint
         return "this key is being used by "+ email
@@ -67,15 +81,15 @@ DeletePrivateKey(fingerprint string) {
     }
 }
 
-DeletePublicKey(fingerprint string) {
-    delete this public key
-    return "Done"
-}
-
 DecryptText(email string, text string) {
-    fetch the private key used by this account
-    decrypt text
-    return it
+
+    fetch the private key  corresponding to the fingerprint used by this account
+
+    plain,err := decrypt text
+    if err != nil
+        return "Error"
+
+    return plain
 }
 
 EncryptText(sender string, reciever []string, text string) {
@@ -83,11 +97,12 @@ EncryptText(sender string, reciever []string, text string) {
     recieverEntity[] (official)
 
     for r := range reciever {
-        fetch first public key containing this r (email id)
+        fetch first public key containing r (email id)
         fill entity array
     }
 
     fetch fingerprint used by sender email
+    fetch his private key
     prepare senderEntity (official)
 
     encrypt the text
