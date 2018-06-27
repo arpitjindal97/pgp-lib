@@ -1,4 +1,4 @@
-package database
+package main
 
 import (
 	"database/sql"
@@ -6,7 +6,10 @@ import (
 	"log"
 )
 
-func CreateDatabase() {
+type Database struct {
+}
+
+func (*Database) CreateDatabase() {
 
 	db, err := sql.Open("sqlite3", "./foo.db")
 	if err != nil {
@@ -36,7 +39,7 @@ func CreateDatabase() {
 	}
 }
 
-func InsertKey(fingerprint, keyblock, keytype, passphrase string) {
+func (*Database) InsertKey(fingerprint, keyblock, keytype, passphrase string) {
 	db, err := sql.Open("sqlite3", "./foo.db")
 	if err != nil {
 		log.Fatal(err)
@@ -53,7 +56,7 @@ func InsertKey(fingerprint, keyblock, keytype, passphrase string) {
 
 }
 
-func ExistsKey(fingerprint string) bool {
+func (*Database) ExistsKey(fingerprint string) bool {
 	db, err := sql.Open("sqlite3", "./foo.db")
 	if err != nil {
 		log.Fatal(err)
@@ -76,4 +79,32 @@ func ExistsKey(fingerprint string) bool {
 		return false
 	}
 	return true
+}
+func (*Database) ListKeys(keytype string) []Key {
+
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	stmt, _ := db.Prepare("select fingerprint,keyblock,keytype,passphrase from keys where keytype = ?")
+	defer stmt.Close()
+	rows, err := stmt.Query(keytype)
+
+	var key []Key
+	if err != nil {
+		log.Fatal(err)
+		return key
+	}
+
+	for rows.Next() {
+		var fingerprint, keyblock, keytype, passphrase string
+		_ = rows.Scan(&fingerprint, &keyblock, &keytype, &passphrase)
+		new_key := Key{fingerprint, keyblock, keytype, passphrase}
+
+		key = append(key, new_key)
+
+	}
+	return key
 }
