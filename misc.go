@@ -23,6 +23,11 @@ type Key struct {
 	Passphrase  string
 }
 
+type Account struct {
+	Email       string
+	Fingerprint string
+}
+
 func KeyAlgoString(algo packet.PublicKeyAlgorithm) string {
 
 	switch algo {

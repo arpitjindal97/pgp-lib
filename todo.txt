@@ -63,6 +63,10 @@ EditAccount(email string, fingerprint string) {
     return "Done"
 }
 
+DeleteAccount(email string) {
+    delete entry from accounts table
+}
+
 DeleteKey(fingerprint string, keytype string) {
 
     if keytype == public

@@ -18,12 +18,11 @@ func (*Database) CreateDatabase() {
 	defer db.Close()
 
 	sqlStmt := `
-	create table identity (
+	create table account (
 		email text not null primary key,
-		name text not null,
 		fingerprint text not null
 	);
-	delete from identity;
+	delete from account;
 
 	create table keys (
 		fingerprint text not null primary key,
@@ -66,11 +65,7 @@ func (*Database) ExistsKey(fingerprint string) bool {
 	sqlStmt := `
 	select fingerprint from keys where fingerprint = ?
 	`
-	stmt, err := db.Prepare(sqlStmt)
-	if err != nil {
-		log.Fatal(err)
-		return true
-	}
+	stmt, _ := db.Prepare(sqlStmt)
 	defer stmt.Close()
 
 	var result string
@@ -80,6 +75,28 @@ func (*Database) ExistsKey(fingerprint string) bool {
 	}
 	return true
 }
+
+func (*Database) GetKey(fingerprint string) string {
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	sqlStmt := `
+	select keyblock from keys where fingerprint = ?
+	`
+	stmt, _ := db.Prepare(sqlStmt)
+	defer stmt.Close()
+
+	var result string
+	err = stmt.QueryRow(fingerprint).Scan(&result)
+	if err != nil {
+		return ""
+	}
+	return result
+}
+
 func (*Database) ListKeys(keytype string) []Key {
 
 	db, err := sql.Open("sqlite3", "./foo.db")
@@ -107,4 +124,93 @@ func (*Database) ListKeys(keytype string) []Key {
 
 	}
 	return key
+}
+
+func (*Database) DeleteKey(fingerprint string) {
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	tx, _ := db.Begin()
+	stmt, _ := tx.Prepare("delete from keys where fingerprint = ?")
+	defer stmt.Close()
+
+	stmt.Exec(fingerprint)
+
+	tx.Commit()
+}
+
+func (*Database) GetAccount(email string) Account {
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	stmt, _ := db.Prepare("select fingerprint from account where email = ?")
+	defer stmt.Close()
+	var fingerprint string
+	err = stmt.QueryRow(email).Scan(&fingerprint)
+	if err != nil {
+		return Account{"", ""}
+	}
+	return Account{email, fingerprint}
+
+}
+
+func (*Database) GetAccountByFingerprint(fingerprint string) Account {
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	stmt, _ := db.Prepare("select email from account where fingerprint = ?")
+	defer stmt.Close()
+	var email string
+	err = stmt.QueryRow(fingerprint).Scan(&email)
+	if err != nil {
+		return Account{"", ""}
+	}
+	return Account{email, fingerprint}
+
+}
+
+func (*Database) AddAccount(email, fingerprint string) {
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	tx, _ := db.Begin()
+	stmt, _ := tx.Prepare("insert into account values(?,?)")
+	defer stmt.Close()
+
+	stmt.Exec(email, fingerprint)
+
+	tx.Commit()
+}
+
+func (*Database) DeleteAccount(email string) {
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	tx, _ := db.Begin()
+	stmt, _ := tx.Prepare("delete from account where email = ?")
+	defer stmt.Close()
+
+	stmt.Exec(email)
+
+	tx.Commit()
+}
+
+func (*Database) UpdateAccount(email, fingerprint string) {
+	database.DeleteAccount(email)
+	database.AddAccount(email, fingerprint)
 }
